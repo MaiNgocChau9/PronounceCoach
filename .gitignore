@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+
+# Android build artifacts and oversized model binaries
+# (regenerate with ./gradlew assembleDebug / scripts/export_model.py)
+android/app/build/
+android/.gradle/
+.gradle/
+local.properties/
+*.apk
+android/wav2vec2_*.onnx
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/
