@@ -9,9 +9,10 @@ venv/
 # Android build artifacts and oversized model binaries
 # (regenerate with ./gradlew assembleDebug / scripts/export_model.py)
 android/app/build/
+android/build/
 android/.gradle/
 .gradle/
-local.properties/
+local.properties
 *.apk
 android/wav2vec2_*.onnx
 
