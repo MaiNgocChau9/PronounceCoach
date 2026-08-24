@@ -1,4 +1,4 @@
-<h1 align="center">OpenPronounce</h1>
+<h1 align="center">PronounceCoach</h1>
 
 <p align="center">
   <b>Open-source, phoneme-level pronunciation assessment.</b><br>
@@ -15,7 +15,7 @@
 
 > **This project is built with AI-assisted development (vibecoding).** The Android app, UI improvements, and performance optimizations in this fork were developed in collaboration with AI models (OpenCode / Claude). The core pronunciation engine is by the original author.
 
-> **This is a fork of [Halleck45/OpenPronounce](https://github.com/Halleck45/OpenPronounce)** by Jean-François Lépine (MIT License). The original project provides a Python library + web server + CLI for phoneme-level pronunciation assessment. This fork adds a fully offline **Android app** with Material You UI, plus web UI and performance improvements. See [What Changed in This Fork](#what-changed-in-this-fork) for details.
+> **PronounceCoach is a fork of [Halleck45/OpenPronounce](https://github.com/Halleck45/OpenPronounce)** by Jean-François Lépine (MIT License). The original project provides a Python library + web server + CLI for phoneme-level pronunciation assessment. This fork adds a fully offline **Android app** with Material You UI, plus web UI and performance improvements. See [What Changed in This Fork](#what-changed-in-this-fork) for details.
 
 ```console
 $ pip install openpronounce

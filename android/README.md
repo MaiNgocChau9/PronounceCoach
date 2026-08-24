@@ -1,4 +1,4 @@
-# OpenPronounce Android
+# PronounceCoach Android
 
 > **Fork of [Halleck45/OpenPronounce](https://github.com/Halleck45/OpenPronounce)** (MIT License) by Jean-François Lépine. The original project provides a Python library + web server for phoneme-level pronunciation assessment. This directory contains the Android app that runs the entire pipeline offline on-device.
 
@@ -203,4 +203,4 @@ WordItem(
 
 ## License
 
-MIT License - Same as OpenPronounce
+MIT License - Same as the original [Halleck45/OpenPronounce](https://github.com/Halleck45/OpenPronounce)

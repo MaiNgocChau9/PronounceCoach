@@ -1,4 +1,4 @@
-# AGENTS.md — OpenPronounce Project Context
+# AGENTS.md — PronounceCoach Project Context
 
 > **Original project**: [Halleck45/OpenPronounce](https://github.com/Halleck45/OpenPronounce)
 > **This fork**: [MaiNgocChau9/OpenPronounce-fork](https://github.com/MaiNgocChau9/OpenPronounce-fork)
