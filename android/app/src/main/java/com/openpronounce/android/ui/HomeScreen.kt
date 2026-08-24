@@ -28,6 +28,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.openpronounce.android.data.WordCategory
 
@@ -54,13 +57,16 @@ fun HomeScreen(
         item {
             Spacer(Modifier.height(4.dp))
             Text(
-                "OpenPronounce",
+                "PronounceCoach",
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold
             )
             Text(
-                t("Based on Halleck45/OpenPronounce",
-                  "Dựa trên Halleck45/OpenPronounce"),
+                buildAnnotatedString {
+                    val vi = LocalLang.current == "vi"
+                    append(if (vi) "Dựa trên " else "Based on ")
+                    withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append("Halleck45/OpenPronounce") }
+                },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

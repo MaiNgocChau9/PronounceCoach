@@ -36,6 +36,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.openpronounce.android.ui.theme.PaletteBlue
 import com.openpronounce.android.ui.theme.PaletteGreen
@@ -161,10 +165,18 @@ fun SettingsScreen(
                 Text(t("About", "Giới thiệu"), style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    t(
-                        "OpenPronounce · offline pronunciation coach. Practice words are generated on-device from a built-in 10k-word lexicon.",
-                        "OpenPronounce · trợ lý luyện phát âm offline. Từ luyện tập được tạo ngay trên máy từ kho 10.000 từ có sẵn."
-                    ),
+                    buildAnnotatedString {
+                        val vi = LocalLang.current == "vi"
+                        if (vi) {
+                            append("PronounceCoach · Dựa trên ")
+                            withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append("Halleck45/OpenPronounce") }
+                            append(". Từ luyện tập được tạo ngay trên máy từ kho 10.000 từ có sẵn.")
+                        } else {
+                            append("PronounceCoach · Based on ")
+                            withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append("Halleck45/OpenPronounce") }
+                            append(". Practice words are generated on-device from a built-in 10k-word lexicon.")
+                        }
+                    },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
