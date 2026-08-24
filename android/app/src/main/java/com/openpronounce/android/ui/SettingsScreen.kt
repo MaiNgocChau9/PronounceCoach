@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import com.openpronounce.android.ui.theme.PaletteBlue
 import com.openpronounce.android.ui.theme.PaletteGreen
 import com.openpronounce.android.ui.theme.PalettePurple
+import com.openpronounce.android.ui.theme.wallpaperPrimaryColor
 import com.openpronounce.android.data.Prefs
 
 private data class Option(val value: String, val label: String)
@@ -124,7 +125,8 @@ fun SettingsScreen(
                     Swatch(PalettePurple, t("Violet", "Tím"), colorSource == Prefs.COLOR_PURPLE) {
                         onColorSourceChange(Prefs.COLOR_PURPLE)
                     }
-                    DynamicSwatch(selected = colorSource == Prefs.COLOR_SYSTEM) {
+                    val wallpaperPrimary = wallpaperPrimaryColor()
+                    DynamicSwatch(color = wallpaperPrimary, selected = colorSource == Prefs.COLOR_SYSTEM) {
                         onColorSourceChange(Prefs.COLOR_SYSTEM)
                     }
                 }
@@ -226,15 +228,15 @@ private fun Swatch(color: Color, label: String, selected: Boolean, onClick: () -
     }
 }
 
-/** The "Material You" option: swatch shows the current dynamic primary color. */
+/** The "Material You" option: swatch shows the wallpaper-derived primary color. */
 @Composable
-private fun DynamicSwatch(selected: Boolean, onClick: () -> Unit) {
+private fun DynamicSwatch(color: Color, selected: Boolean, onClick: () -> Unit) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
                 .size(48.dp)
-                .background(MaterialTheme.colorScheme.primary, CircleShape)
+                .background(color, CircleShape)
                 .border(
                     width = if (selected) swatchBorder else 0.dp,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -246,7 +248,7 @@ private fun DynamicSwatch(selected: Boolean, onClick: () -> Unit) {
                 Icon(
                     Icons.Filled.Check,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimary,
+                    tint = Color.White,
                     modifier = Modifier.size(22.dp)
                 )
             }

@@ -1,6 +1,6 @@
 # OpenPronounce Android
 
-English pronunciation learning app with AI-powered phoneme-level assessment. Runs 100% offline on Android.
+> **Fork of [Halleck45/OpenPronounce](https://github.com/Halleck45/OpenPronounce)** (MIT License) by Jean-François Lépine. The original project provides a Python library + web server for phoneme-level pronunciation assessment. This directory contains the Android app that runs the entire pipeline offline on-device.
 
 ## Features
 

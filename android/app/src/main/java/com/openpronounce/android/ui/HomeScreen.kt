@@ -59,8 +59,9 @@ fun HomeScreen(
                 fontWeight = FontWeight.Bold
             )
             Text(
-                t("Read aloud. See every sound.", "Đọc to. Thấy rõ từng âm."),
-                style = MaterialTheme.typography.bodyLarge,
+                t("Based on Halleck45/OpenPronounce",
+                  "Dựa trên Halleck45/OpenPronounce"),
+                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }

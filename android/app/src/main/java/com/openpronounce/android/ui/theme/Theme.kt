@@ -20,6 +20,22 @@ val PaletteGreen = Color(0xFF006D3A)
 val PaletteBlue = Color(0xFF1E5EC8)
 val PalettePurple = Color(0xFF6750A4)
 
+/** Wallpaper-derived primary color, independent of current palette selection.
+ *  Used by the DynamicSwatch so it always shows the device's actual wallpaper color. */
+@Composable
+fun wallpaperPrimaryColor(): Color {
+    val context = LocalContext.current
+    val darkTheme = isSystemInDarkTheme()
+    return remember(darkTheme) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val scheme = if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+            scheme.primary
+        } else {
+            PaletteGreen
+        }
+    }
+}
+
 private val LightGreenScheme = lightColorScheme(
     primary = Color(0xFF006D3A),
     onPrimary = Color.White,
