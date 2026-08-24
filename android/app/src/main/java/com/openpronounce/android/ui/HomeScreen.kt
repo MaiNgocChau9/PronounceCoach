@@ -1,190 +1,183 @@
 package com.openpronounce.android.ui
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.openpronounce.android.data.WordCategory
-import com.openpronounce.android.data.WordItem
 
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * M3 Expressive home: a hero card for the primary action, then categories as tonal
+ * cards with letter avatars cycling through the three container colors.
+ */
 @Composable
 fun HomeScreen(
     categories: List<WordCategory>,
     onCategoryClick: (String) -> Unit,
-    onQuickPractice: () -> Unit
+    modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = Modifier
+    LazyColumn(
+        modifier = modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFF1A1A2E),
-                        Color(0xFF16213E)
-                    )
-                )
-            )
-            .padding(16.dp)
+            .padding(horizontal = 20.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text(
-            text = "OpenPronounce",
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.White,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
+        item {
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "OpenPronounce",
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                t("Read aloud. See every sound.", "Đọc to. Thấy rõ từng âm."),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
 
-        Text(
-            text = "Practice your English pronunciation",
-            fontSize = 14.sp,
-            color = Color(0xFF8B8FA3),
-            modifier = Modifier.padding(bottom = 24.dp)
-        )
-
-        // Quick Practice Button
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onQuickPractice() },
-            colors = CardDefaults.cardColors(
-                containerColor = Color(0xFF4CAF50)
-            ),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(20.dp),
-                verticalAlignment = Alignment.CenterVertically
+        // Hero moment — the primary thing to do, impossible to miss.
+        item {
+            Spacer(Modifier.height(8.dp))
+            Surface(
+                shape = MaterialTheme.shapes.extraLarge,
+                color = MaterialTheme.colorScheme.primaryContainer,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Icon(
-                    Icons.Filled.PlayArrow,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(32.dp)
-                )
-                Spacer(modifier = Modifier.width(16.dp))
-                Column {
-                    Text(
-                        text = "Quick Practice",
-                        color = Color.White,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "Start with a random word",
-                        color = Color.White.copy(alpha = 0.8f),
-                        fontSize = 12.sp
+                Row(
+                    modifier = Modifier.padding(20.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .size(56.dp)
+                            .background(
+                                MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.12f),
+                                CircleShape
+                            )
+                    ) {
+                        Icon(
+                            Icons.Filled.Mic,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+                    Column {
+                        Text(
+                            t("Practice speaking", "Luyện phát âm"),
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Text(
+                            t("Use the + button to start — type your own text, go random, or drill a single sound.",
+                              "Nhấn dấu + để bắt đầu — tự nhập câu, chọn ngẫu nhiên, hoặc luyện một âm cụ thể."),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f)
+                        )
+                    }
+                }
+            }
+        }
+
+        item {
+            Spacer(Modifier.height(10.dp))
+            Text(
+                t("CATEGORIES", "NHÓM TỪ"),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+
+        itemsIndexed(categories) { index, category ->
+            val containers = listOf(
+                MaterialTheme.colorScheme.secondaryContainer to MaterialTheme.colorScheme.onSecondaryContainer,
+                MaterialTheme.colorScheme.tertiaryContainer to MaterialTheme.colorScheme.onTertiaryContainer,
+                MaterialTheme.colorScheme.surfaceContainerHigh to MaterialTheme.colorScheme.onSurface
+            )
+            val (container, content) = containers[index % containers.size]
+
+            Card(
+                onClick = { onCategoryClick(category.id) },
+                shape = MaterialTheme.shapes.large,
+                colors = CardDefaults.cardColors(containerColor = container),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 18.dp, vertical = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .size(44.dp)
+                            .background(content.copy(alpha = 0.12f), CircleShape)
+                    ) {
+                        Text(
+                            category.name.first().toString(),
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = content
+                        )
+                    }
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            category.name,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = content
+                        )
+                        Text(
+                            if (LocalLang.current == "vi") "${category.words.size} từ" else "${category.words.size} words",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = content.copy(alpha = 0.7f)
+                        )
+                    }
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = null,
+                        tint = content.copy(alpha = 0.6f),
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Text(
-            text = "Categories",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = Color.White,
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
-
-        LazyColumn {
-            items(categories) { category ->
-                CategoryCard(
-                    category = category,
-                    onClick = { onCategoryClick(category.id) }
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-        }
+        item { Spacer(Modifier.height(96.dp)) } // clears the FAB / bottom bar
     }
 }
 
-@Composable
-fun CategoryCard(
-    category: WordCategory,
-    onClick: () -> Unit
+private fun androidx.compose.foundation.lazy.LazyListScope.itemsIndexed(
+    categories: List<WordCategory>,
+    itemContent: @Composable (Int, WordCategory) -> Unit
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF2A2A4A)
-        ),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFF4CAF50).copy(alpha = 0.2f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    when (category.id) {
-                        "basics" -> Icons.Filled.Star
-                        "food" -> Icons.Filled.Restaurant
-                        "travel" -> Icons.Filled.Flight
-                        "work" -> Icons.Filled.Work
-                        "nature" -> Icons.Filled.Nature
-                        else -> Icons.Filled.Folder
-                    },
-                    contentDescription = null,
-                    tint = Color(0xFF4CAF50),
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = category.name,
-                    color = Color.White,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium
-                )
-                Text(
-                    text = "${category.words.size} words",
-                    color = Color(0xFF8B8FA3),
-                    fontSize = 12.sp
-                )
-            }
-
-            Icon(
-                Icons.Filled.ChevronRight,
-                contentDescription = null,
-                tint = Color(0xFF8B8FA3)
-            )
-        }
-    }
+    items(categories.size) { i -> itemContent(i, categories[i]) }
 }

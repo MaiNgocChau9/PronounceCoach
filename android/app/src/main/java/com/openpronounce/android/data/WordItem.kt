@@ -1,8 +1,5 @@
 package com.openpronounce.android.data
 
-import kotlinx.serialization.Serializable
-
-@Serializable
 data class WordItem(
     val word: String,
     val ipa: String,
@@ -12,7 +9,6 @@ data class WordItem(
     val difficulty: Int = 1 // 1=easy, 2=medium, 3=hard
 )
 
-@Serializable
 data class WordCategory(
     val id: String,
     val name: String,

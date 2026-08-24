@@ -5,16 +5,21 @@ import ai.onnxruntime.OrtEnvironment
 import ai.onnxruntime.OrtSession
 import android.content.Context
 import android.util.Log
+import com.openpronounce.android.scoring.CtcDecoder
 import java.nio.FloatBuffer
+import kotlin.math.sqrt
 
 class PhonemeRecognizer(private val context: Context) {
 
     companion object {
         private const val TAG = "PhonemeRecognizer"
+        private const val SAMPLE_RATE = 16000
+        private const val MAX_SECONDS = 20
     }
 
     private var ortEnv: OrtEnvironment? = null
     private var session: OrtSession? = null
+    private var inputName: String = ""
     private var vocab: List<String> = emptyList()
     private var isLoaded = false
 
@@ -25,104 +30,78 @@ class PhonemeRecognizer(private val context: Context) {
         ortEnv = OrtEnvironment.getEnvironment()
 
         val modelBytes = context.assets.open(modelPath).readBytes()
-        Log.i(TAG, "Model bytes loaded: ${modelBytes.size}")
+        val threads = Runtime.getRuntime().availableProcessors().coerceIn(4, 8)
 
         val opts = OrtSession.SessionOptions().apply {
-            setIntraOpNumThreads(2)
+            setIntraOpNumThreads(threads)
+            setInterOpNumThreads(1)
+            setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT)
         }
         session = ortEnv!!.createSession(modelBytes, opts)
+        inputName = session!!.inputNames.first()
+        Log.i(TAG, "ONNX session ready (intra-op threads: $threads)")
 
         vocab = context.assets.open(vocabPath).bufferedReader().readLines()
             .filter { it.isNotEmpty() }
         Log.i(TAG, "Vocab size: ${vocab.size}")
 
         isLoaded = true
-        Log.i(TAG, "Model loaded successfully!")
+        warmUp()
     }
 
-    fun transcribe(audioData: FloatArray, sampleRate: Int = 16000): String {
-        if (!isLoaded) {
-            Log.e(TAG, "Model not loaded!")
-            return ""
-        }
+    /** One throwaway inference so the first real analysis skips lazy kernel setup. */
+    private fun warmUp() {
+        runCatching {
+            val silence = FloatArray(SAMPLE_RATE / 2) // 0.5 s of zeros
+            infer(silence)
+            Log.i(TAG, "Warm-up inference done")
+        }.onFailure { Log.w(TAG, "Warm-up failed (harmless): ${it.message}") }
+    }
 
+    /**
+     * Recognizes phones in a waveform: trims leading/trailing silence (proportional
+     * speed-up, fewer junk phones), runs the ONNX session and decodes CTC greedily
+     * with per-phone confidences.
+     */
+    fun transcribePhones(audioData: FloatArray, sampleRate: Int = SAMPLE_RATE): CtcDecoder.PhoneResult {
+        check(isLoaded) { "Model not loaded" }
+
+        val resampled = if (sampleRate != SAMPLE_RATE) resample(audioData, sampleRate, SAMPLE_RATE) else audioData
+        val trimmed = SilenceTrimmer.trim(resampled, SAMPLE_RATE)
+
+        return infer(trimmed)
+    }
+
+    private fun infer(audio: FloatArray): CtcDecoder.PhoneResult {
         val env = ortEnv!!
         val sess = session!!
 
-        // Resample if needed
-        val resampled = if (sampleRate != 16000) {
-            resample(audioData, sampleRate, 16000)
-        } else {
-            audioData
+        // Wav2Vec2 expects raw samples normalized per utterance.
+        normalize(audio)
+        val clipped = if (audio.size > SAMPLE_RATE * MAX_SECONDS) audio.copyOf(SAMPLE_RATE * MAX_SECONDS) else audio
+
+        OnnxTensor.createTensor(env, FloatBuffer.wrap(clipped), longArrayOf(1, clipped.size.toLong())).use { input ->
+            sess.run(mapOf(inputName to input)).use { results ->
+                val output = results[0] as OnnxTensor
+                val shape = output.info.shape // [1, frames, vocab]
+                val frames = shape[1].toInt()
+                val vocabSize = shape[2].toInt()
+                val buffer: FloatBuffer = output.floatBuffer
+                Log.d(TAG, "Logits [1, $frames, $vocabSize]")
+                return CtcDecoder.decode(buffer, frames, vocabSize, vocab)
+            }
         }
-
-        Log.d(TAG, "Audio length: ${resampled.size} samples (${resampled.size / 16000.0}s)")
-
-        // Pad or trim to reasonable length (max 30s)
-        val maxLen = 16000 * 30
-        val audio = if (resampled.size > maxLen) {
-            resampled.copyOf(maxLen)
-        } else {
-            resampled
-        }
-
-        // Create input tensor [1, audio_length]
-        val inputTensor = OnnxTensor.createTensor(
-            env,
-            FloatBuffer.wrap(audio),
-            longArrayOf(1, audio.size.toLong())
-        )
-
-        // Run inference
-        val inputName = sess.inputNames.first()
-        Log.d(TAG, "Running inference, input: $inputName, shape: [1, ${audio.size}]")
-
-        val results = sess.run(mapOf(inputName to inputTensor))
-
-        // Get logits [1, frames, vocab_size]
-        @Suppress("UNCHECKED_CAST")
-        val output = results[0].value as Array<Array<FloatArray>>
-        val logits = output[0] // [frames, vocab_size]
-
-        Log.d(TAG, "Output shape: [${logits.size}, ${logits[0].size}]")
-
-        // Greedy CTC decode
-        val text = ctcDecode(logits)
-
-        inputTensor.close()
-        results.close()
-
-        return text
     }
 
-    private fun ctcDecode(logits: Array<FloatArray>): String {
-        val sb = StringBuilder()
-        var lastTokenId = -1
-
-        for (frame in logits.indices) {
-            // Find argmax
-            var maxId = 0
-            var maxVal = logits[frame][0]
-            for (j in 1 until logits[frame].size) {
-                if (logits[frame][j] > maxVal) {
-                    maxVal = logits[frame][j]
-                    maxId = j
-                }
-            }
-
-            // CTC: skip blank (id=0) and repeated tokens
-            if (maxId != 0 && maxId != lastTokenId) {
-                val token = vocab.getOrElse(maxId) { "<unk>" }
-                if (token.isNotEmpty() && token != "<s>" && token != "</s>" && token != "<pad>" && token != "|") {
-                    sb.append(token)
-                } else if (token == "|") {
-                    sb.append(" ") // word boundary
-                }
-            }
-            lastTokenId = maxId
-        }
-
-        return sb.toString().trim()
+    /** Zero-mean unit-variance normalization over the whole clip, like HF's processor. */
+    private fun normalize(audio: FloatArray) {
+        var mean = 0.0
+        for (v in audio) mean += v
+        mean /= audio.size.coerceAtLeast(1)
+        var variance = 0.0
+        for (v in audio) variance += (v - mean) * (v - mean)
+        val std = sqrt(variance / audio.size.coerceAtLeast(1)).toFloat().coerceAtLeast(1e-7f)
+        for (i in audio.indices) audio[i] = ((audio[i] - mean.toFloat()) / std)
     }
 
     private fun resample(audio: FloatArray, fromRate: Int, toRate: Int): FloatArray {
@@ -133,19 +112,17 @@ class PhonemeRecognizer(private val context: Context) {
             val srcPos = i * ratio
             val srcIdx = srcPos.toInt()
             val frac = srcPos - srcIdx
-            if (srcIdx + 1 < audio.size) {
-                audio[srcIdx] * (1 - frac) + audio[srcIdx + 1] * frac
-            } else if (srcIdx < audio.size) {
-                audio[srcIdx]
-            } else {
-                0f
+            when {
+                srcIdx + 1 < audio.size -> audio[srcIdx] * (1 - frac) + audio[srcIdx + 1] * frac
+                srcIdx < audio.size -> audio[srcIdx]
+                else -> 0f
             }
         }
     }
 
     fun close() {
         session?.close()
-        ortEnv?.close()
+        session = null
         isLoaded = false
     }
 }

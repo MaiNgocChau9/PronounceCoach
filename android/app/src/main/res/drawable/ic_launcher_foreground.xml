@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Speech bubble + waveform bars, centered in the adaptive-icon safe zone
+     (circle Ø66 inside the 108dp canvas) so round masks never crop it. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Bubble -->
+    <path
+        android:pathData="M41,41 h26 a7,7 0 0 1 7,7 v12 a7,7 0 0 1 -7,7 H55 l-8,8 v-8 h-6 a7,7 0 0 1 -7,-7 v-12 a7,7 0 0 1 7,-7 z"
+        android:fillColor="#FFFFFF" />
+
+    <!-- Waveform bars -->
+    <path
+        android:pathData="M41,50 h4 v8 h-4 z M48,45 h4 v17 h-4 z M55,48 h4 v11 h-4 z M62,51 h4 v5 h-4 z"
+        android:fillColor="#1FA05A" />
+</vector>

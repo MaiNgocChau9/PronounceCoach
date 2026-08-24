@@ -1,64 +1,75 @@
 package com.openpronounce.android.scoring
 
+import java.nio.FloatBuffer
+
+/**
+ * Greedy CTC decoding with per-phone confidence and frame spans, mirroring the Python
+ * pipeline's decode_ctc: repeated frames are collapsed, blanks and special tokens
+ * dropped, each phone gets the softmax posterior of its token as confidence and the
+ * half-open frame range it was decoded from.
+ */
 object CtcDecoder {
 
     data class PhoneResult(
         val phones: List<String>,
         val confidences: List<Float>,
-        val spans: List<Pair<Int, Int>>
+        /** Half-open frame ranges [start, end) of each phone. */
+        val spans: List<IntRange>
     )
 
     fun decode(
-        logits: FloatArray,
-        vocab: List<String>,
+        logits: FloatBuffer,
         numFrames: Int,
-        vocabSize: Int
+        vocabSize: Int,
+        vocab: List<String>,
+        blankId: Int = 0
     ): PhoneResult {
-        val blankId = 0
+        val frame = FloatArray(vocabSize)
         val phones = mutableListOf<String>()
         val confidences = mutableListOf<Float>()
-        val spans = mutableListOf<Pair<Int, Int>>()
+        val spans = mutableListOf<IntRange>()
+        var openStart = -1     // start frame of the span currently being extended, -1 = none
+        var lastId = -1
 
-        var lastToken = -1
-        var frameStart = 0
+        for (f in 0 until numFrames) {
+            for (k in 0 until vocabSize) frame[k] = logits.get(f * vocabSize + k)
 
-        for (frame in 0 until numFrames) {
-            val offset = frame * vocabSize
-            var maxId = 0
-            var maxVal = logits[offset]
-            var sumExp = 0f
-
-            // Softmax per frame for confidence
-            for (k in 0 until vocabSize) {
-                val v = logits[offset + k]
-                if (v > maxVal) {
-                    maxVal = v
-                    maxId = k
+            var id = 0
+            var maxVal = frame[0]
+            for (k in 1 until vocabSize) {
+                if (frame[k] > maxVal) {
+                    maxVal = frame[k]
+                    id = k
                 }
             }
 
-            // Compute softmax for the winning token
-            for (k in 0 until vocabSize) {
-                sumExp += Math.exp((logits[offset + k] - maxVal).toDouble()).toFloat()
-            }
-            val confidence = Math.exp(0.0).toFloat() / sumExp // softmax of max
-
-            if (maxId != blankId && maxId != lastToken) {
-                val phone = vocab.getOrElse(maxId) { "<unk>" }
-                if (phone.isNotEmpty() && phone != "<s>" && phone != "</s>" && phone != "<pad>") {
-                    phones.add(phone)
-                    confidences.add(coerceIn(confidence, 0f, 1f))
-                    spans.add(Pair(frameStart, frame))
+            if (id != lastId) {
+                if (openStart >= 0) {                       // close the previous phone
+                    spans[spans.size - 1] = openStart until f
+                    openStart = -1
                 }
-                frameStart = frame
+                if (id != blankId && isRealToken(vocab.getOrElse(id) { "" })) {
+                    phones.add(vocab[id])
+                    confidences.add(softmax(frame, id))
+                    spans.add(IntRange(f, f))               // provisional end, closed below
+                    openStart = f
+                }
             }
-            lastToken = maxId
+            lastId = id
         }
+        if (openStart >= 0) spans[spans.size - 1] = openStart until numFrames
 
         return PhoneResult(phones, confidences, spans)
     }
 
-    private fun coerceIn(value: Float, min: Float, max: Float): Float {
-        return value.coerceIn(min, max)
+    private fun softmax(frame: FloatArray, token: Int): Float {
+        var sum = 0.0
+        for (v in frame) sum += Math.exp((v - frame[token]).toDouble())
+        return (1.0 / sum).toFloat().coerceIn(0f, 1f)
+    }
+
+    /** Special vocabulary entries are wrapped in angle brackets ("<pad>", "<s>", ...). */
+    fun isRealToken(token: String): Boolean {
+        return token.isNotEmpty() && !token.startsWith("<") && !token.endsWith(">")
     }
 }
