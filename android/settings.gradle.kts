@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "OpenPronounce"
+rootProject.name = "PronounceCoach"
 include(":app")

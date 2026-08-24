@@ -7,11 +7,11 @@ plugins {
 }
 
 android {
-    namespace = "com.openpronounce.android"
+    namespace = "com.pronouncecoach.android"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.openpronounce.android"
+        applicationId = "com.pronouncecoach.android"
         minSdk = 26
         targetSdk = 36
         versionCode = 2

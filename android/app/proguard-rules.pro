@@ -6,5 +6,5 @@
 -dontnote kotlinx.serialization.AnnotationsKt
 
 # Keep data classes for serialization
--keep class com.openpronounce.android.data.** { *; }
--keep class com.openpronounce.android.scoring.** { *; }
+-keep class com.pronouncecoach.android.data.** { *; }
+-keep class com.pronouncecoach.android.scoring.** { *; }

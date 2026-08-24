@@ -2,14 +2,14 @@
 <resources>
     <!-- Splash: shown by the system the instant the process starts, before any
          Compose frame. Brand background + launcher glyph instead of a blank flash. -->
-    <style name="Theme.OpenPronounce" parent="Theme.SplashScreen">
+    <style name="Theme.PronounceCoach" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">#FAFAF8</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
-        <item name="postSplashScreenTheme">@style/Theme.OpenPronounce.Main</item>
+        <item name="postSplashScreenTheme">@style/Theme.PronounceCoach.Main</item>
     </style>
 
     <!-- Main app theme, swapped in automatically after the splash dismisses. -->
-    <style name="Theme.OpenPronounce.Main" parent="android:Theme.Material.Light.NoActionBar">
+    <style name="Theme.PronounceCoach.Main" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <!-- Neutral startup background so the pre-Compose frame never flashes a fixed color -->
