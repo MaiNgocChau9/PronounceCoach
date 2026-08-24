@@ -1,7 +1,7 @@
 # AGENTS.md — PronounceCoach Project Context
 
 > **Original project**: [Halleck45/OpenPronounce](https://github.com/Halleck45/OpenPronounce)
-> **This fork**: [MaiNgocChau9/OpenPronounce-fork](https://github.com/MaiNgocChau9/OpenPronounce-fork)
+> **This fork**: [MaiNgocChau9/PronounceCoach](https://github.com/MaiNgocChau9/PronounceCoach)
 > **Author of original**: Jean-François Lépine (MIT License)
 > **This fork was developed with AI-assisted development (vibecoding)** using OpenCode / Claude.
 

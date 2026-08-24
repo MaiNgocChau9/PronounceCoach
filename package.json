@@ -12,15 +12,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/MaiNgocChau9/OpenPronounce-fork.git"
+    "url": "git+https://github.com/MaiNgocChau9/PronounceCoach.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/MaiNgocChau9/OpenPronounce-fork/issues"
+    "url": "https://github.com/MaiNgocChau9/PronounceCoach/issues"
   },
-  "homepage": "https://github.com/MaiNgocChau9/OpenPronounce-fork#readme",
+  "homepage": "https://github.com/MaiNgocChau9/PronounceCoach#readme",
   "devDependencies": {
     "tailwindcss": "^3.4.19"
   }
