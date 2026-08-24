@@ -79,7 +79,7 @@ def _validate_lang(lang: str) -> str:
 
 
 @app.post("/pronunciation")
-async def api_analyze_pronunciation(file: UploadFile = File(...), expected_text: str = Form(...),
+def api_analyze_pronunciation(file: UploadFile = File(...), expected_text: str = Form(...),
                                     lang: str = Form(DEFAULT_LANGUAGE)):
     """Score ``file`` against ``expected_text`` in ``lang``. Returns the full analysis (score, errors, prosody)."""
     lang = _validate_lang(lang)
@@ -93,7 +93,7 @@ async def api_analyze_pronunciation(file: UploadFile = File(...), expected_text:
 
 
 @app.post("/speech2text")
-async def api_speech2text(file: UploadFile = File(...), lang: str = Form(DEFAULT_LANGUAGE)):
+def api_speech2text(file: UploadFile = File(...), lang: str = Form(DEFAULT_LANGUAGE)):
     """Transcribe ``file`` with the Wav2Vec2 model of ``lang``."""
     lang = _validate_lang(lang)
     try:
@@ -106,7 +106,7 @@ async def api_speech2text(file: UploadFile = File(...), lang: str = Form(DEFAULT
 
 
 @app.post("/phonemes")
-async def api_phonemes(text: str = Form(...), lang: str = Form(DEFAULT_LANGUAGE)):
+def api_phonemes(text: str = Form(...), lang: str = Form(DEFAULT_LANGUAGE)):
     """Return the IPA phonemes of ``text`` in ``lang`` and the word each phoneme belongs to."""
     lang = _validate_lang(lang)
     try:
@@ -118,7 +118,7 @@ async def api_phonemes(text: str = Form(...), lang: str = Form(DEFAULT_LANGUAGE)
 
 
 @app.post("/tts")
-async def api_tts(text: str = Form(...), lang: str = Form(DEFAULT_LANGUAGE)):
+def api_tts(text: str = Form(...), lang: str = Form(DEFAULT_LANGUAGE)):
     """Return a 16 kHz wav reference pronunciation of ``text`` in ``lang``."""
     lang = _validate_lang(lang)
     try:

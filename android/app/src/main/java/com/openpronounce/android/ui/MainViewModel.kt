@@ -31,8 +31,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _currentWord = MutableStateFlow<WordItem?>(null)
     val currentWord: StateFlow<WordItem?> = _currentWord
 
+    /** Pre-split IPA tokens: computed once in setTarget(), reused by all composables. */
+    val ipaTokens: StateFlow<List<String>> = MutableStateFlow(emptyList())
+
     /** Expected phones of the current target, one entry per phone. */
-    private val _expectedPhones = MutableStateFlow<List<String>>(emptyList())
+    val expectedPhones: StateFlow<List<String>> = MutableStateFlow(emptyList())
 
     private val _result = MutableStateFlow<PronunciationResult?>(null)
     val result: StateFlow<PronunciationResult?> = _result
@@ -99,7 +102,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun setTarget(word: WordItem) {
         _currentWord.value = word
-        _expectedPhones.value = word.ipa.split(Regex("\\s+")).filter { it.isNotEmpty() }
+        val phones = word.ipa.split(Regex("\\s+")).filter { it.isNotEmpty() }
+        (expectedPhones as MutableStateFlow).value = phones
+        (ipaTokens as MutableStateFlow).value = phones
         _result.value = null
         _isCustomMode.value = false
         recorder.clearRecording()
@@ -109,12 +114,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _customText.value = text
         if (text.isBlank()) return
 
-        // Reference pronunciation for every word from the bundled espeak lexicon
-        // (same convention the heard side is decoded into); OOV words are spelled out.
         val phones = g2p.textToPhones(text)
 
         _currentWord.value = WordItem(word = text.trim(), ipa = phones.joinToString(" "))
-        _expectedPhones.value = phones
+        (expectedPhones as MutableStateFlow).value = phones
+        (ipaTokens as MutableStateFlow).value = phones
         _result.value = null
         _isCustomMode.value = true
         recorder.clearRecording()
@@ -124,7 +128,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun startFreePractice() {
         _selectedCategory.value = null
         _currentWord.value = null
-        _expectedPhones.value = emptyList()
+        (expectedPhones as MutableStateFlow).value = emptyList()
         _customText.value = ""
         _result.value = null
         _isCustomMode.value = true
@@ -144,7 +148,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             val audio = recorder.awaitRecording() ?: return@launch
             val target = _currentWord.value ?: return@launch
-            val expected = _expectedPhones.value
+            val expected = expectedPhones.value
 
             // Silence guard: never score empty air (it used to land ~60 points).
             val peak = peakRms(audio)
@@ -231,33 +235,37 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      * toward the end. Words come from the 10k-lexicon, so there is always variety.
      */
     fun startDrill(entry: PhonemeEntry) {
-        val raw = g2p.findWords(listOf(entry.tokens))
-            .filter { (word, _) -> word.length >= 2 }
-            .shuffled()   // randomize so ties within a difficulty bucket vary
+        viewModelScope.launch {
+            val items = withContext(Dispatchers.Default) {
+                val raw = g2p.findWords(listOf(entry.tokens))
+                    .filter { (word, _) -> word.length >= 2 }
+                    .shuffled()
 
-        val vi = com.openpronounce.android.data.Prefs.language(getApplication()) == "vi"
-        val drillMeaning = if (vi) "Luyện /${entry.symbol}/" else "Drill /${entry.symbol}/"
-        val items = raw.mapNotNull { (w, ipa) ->
-            val phones = ipa.split(" ").filter { it.isNotEmpty() }
-            val syllables = DrillSorter.syllableCount(phones)
-            if (syllables == 0) return@mapNotNull null
-            val pos = DrillSorter.positionRank(phones, entry.tokens) { t -> t.trimEnd('ː', 'ˑ') }
-            Triple(w, ipa, syllables * 10 + pos)
-        }
-            .sortedBy { it.third }
-            .take(60)
-            .map { (w, ipa, _) ->
-                WordItem(w, ipa, entry.symbol, drillMeaning, "drill", 1)
+                val vi = com.openpronounce.android.data.Prefs.language(getApplication()) == "vi"
+                val drillMeaning = if (vi) "Luyện /${entry.symbol}/" else "Drill /${entry.symbol}/"
+                raw.mapNotNull { (w, ipa) ->
+                    val phones = ipa.split(" ").filter { it.isNotEmpty() }
+                    val syllables = DrillSorter.syllableCount(phones)
+                    if (syllables == 0) return@mapNotNull null
+                    val pos = DrillSorter.positionRank(phones, entry.tokens) { t -> t.trimEnd('ː', 'ˑ') }
+                    Triple(w, ipa, syllables * 10 + pos)
+                }
+                    .sortedBy { it.third }
+                    .take(60)
+                    .map { (w, ipa, _) ->
+                        WordItem(w, ipa, entry.symbol, drillMeaning, "drill", 1)
+                    }
             }
-        if (items.isEmpty()) return
+            if (items.isEmpty()) return@launch
 
-        _selectedCategory.value = null
-        _customText.value = ""
-        _isCustomMode.value = false
-        _drillPhone.value = entry
-        drillQueue = items
-        drillPos = 0
-        setTarget(items[0])
+            _selectedCategory.value = null
+            _customText.value = ""
+            _isCustomMode.value = false
+            _drillPhone.value = entry
+            drillQueue = items
+            drillPos = 0
+            setTarget(items[0])
+        }
     }
 
     /** Next word of the drill; wraps around keeping the easy→hard order. */

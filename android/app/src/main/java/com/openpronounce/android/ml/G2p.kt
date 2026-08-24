@@ -25,22 +25,31 @@ class G2p(context: Context) {
             'u' to "j uː", 'v' to "v iː", 'w' to "d ʌ b əl j uː", 'x' to "ɛ k s",
             'y' to "w aɪ", 'z' to "z iː"
         )
-    }
 
-    private val dict = ConcurrentHashMap<String, String>()
-    @Volatile
-    private var loaded = false
+        private val dict = ConcurrentHashMap<String, String>()
+        @Volatile
+        private var loaded = false
+        private val lock = Any()
 
-    init {
-        runCatching {
-            context.assets.open(ASSET).bufferedReader().useLines { lines ->
-                for (line in lines) {
-                    val idx = line.indexOf('\t')
-                    if (idx > 0) dict[line.substring(0, idx)] = line.substring(idx + 1)
+        fun loadIfNeeded(context: Context) {
+            if (loaded) return
+            synchronized(lock) {
+                if (loaded) return
+                runCatching {
+                    context.assets.open(ASSET).bufferedReader().useLines { lines ->
+                        for (line in lines) {
+                            val idx = line.indexOf('\t')
+                            if (idx > 0) dict[line.substring(0, idx)] = line.substring(idx + 1)
+                        }
+                    }
+                    loaded = true
                 }
             }
-            loaded = true
         }
+    }
+
+    init {
+        loadIfNeeded(context.applicationContext)
     }
 
     val isReady: Boolean get() = loaded

@@ -32,11 +32,14 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.openpronounce.android.ui.theme.PaletteBlue
+import com.openpronounce.android.ui.theme.PaletteGreen
+import com.openpronounce.android.ui.theme.PalettePurple
 import com.openpronounce.android.data.Prefs
 
 private data class Option(val value: String, val label: String)
@@ -53,26 +56,21 @@ fun SettingsScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Scaffold(
-        modifier = modifier,
-        topBar = {
-            TopAppBar(
-                title = { Text(t("Settings", "Cài đặt")) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = t("Back", "Quay lại"))
-                    }
-                },
-                colors = TopAppBarDefaults.largeTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
+    Column(modifier = modifier.fillMaxSize()) {
+        TopAppBar(
+            title = { Text(t("Settings", "Cài đặt")) },
+            navigationIcon = {
+                IconButton(onClick = onBack) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = t("Back", "Quay lại"))
+                }
+            },
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = MaterialTheme.colorScheme.surface
             )
-        }
-    ) { padding ->
+        )
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp)
         ) {
@@ -80,12 +78,18 @@ fun SettingsScreen(
             SettingCard {
                 Text(t("Theme", "Chủ đề"), style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(12.dp))
-                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                val sysLabel = t("System", "Hệ thống")
+                val lightLabel = t("Light", "Sáng")
+                val darkLabel = t("Dark", "Tối")
+                val themeOptions = remember(sysLabel, lightLabel, darkLabel) {
                     listOf(
-                        Option("system", t("System", "Hệ thống")),
-                        Option("light", t("Light", "Sáng")),
-                        Option("dark", t("Dark", "Tối"))
-                    ).forEachIndexed { index, option ->
+                        Option("system", sysLabel),
+                        Option("light", lightLabel),
+                        Option("dark", darkLabel)
+                    )
+                }
+                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                    themeOptions.forEachIndexed { index, option ->
                         SegmentedButton(
                             selected = themeMode == option.value,
                             onClick = { onThemeModeChange(option.value) },
@@ -111,13 +115,13 @@ fun SettingsScreen(
                 )
                 Spacer(Modifier.height(14.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
-                    Swatch(Color(0xFF1FA05A), t("Green", "Xanh lá"), colorSource == Prefs.COLOR_GREEN) {
+                    Swatch(PaletteGreen, t("Green", "Xanh lá"), colorSource == Prefs.COLOR_GREEN) {
                         onColorSourceChange(Prefs.COLOR_GREEN)
                     }
                     Swatch(PaletteBlue, t("Blue", "Xanh dương"), colorSource == Prefs.COLOR_BLUE) {
                         onColorSourceChange(Prefs.COLOR_BLUE)
                     }
-                    Swatch(Color(0xFF7C5CF0), t("Violet", "Tím"), colorSource == Prefs.COLOR_PURPLE) {
+                    Swatch(PalettePurple, t("Violet", "Tím"), colorSource == Prefs.COLOR_PURPLE) {
                         onColorSourceChange(Prefs.COLOR_PURPLE)
                     }
                     DynamicSwatch(selected = colorSource == Prefs.COLOR_SYSTEM) {
@@ -131,11 +135,14 @@ fun SettingsScreen(
             SettingCard {
                 Text(t("Language", "Ngôn ngữ"), style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(12.dp))
-                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                val langOptions = remember {
                     listOf(
                         Option("en", "English"),
                         Option("vi", "Tiếng Việt")
-                    ).forEachIndexed { index, option ->
+                    )
+                }
+                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                    langOptions.forEachIndexed { index, option ->
                         SegmentedButton(
                             selected = language == option.value,
                             onClick = { onLanguageChange(option.value) },

@@ -108,7 +108,7 @@
         });
         $('details').addEventListener('toggle', () => {
             if ($('details').open && state.chartsDirty) {
-                renderCharts();
+                loadChartJs().then(renderCharts);
             }
         });
     }
@@ -675,6 +675,20 @@
     }
 
     // ---------------------------------------------------------------- charts
+
+    let chartJsPromise = null;
+    function loadChartJs() {
+        if (typeof Chart !== 'undefined') return Promise.resolve();
+        if (chartJsPromise) return chartJsPromise;
+        chartJsPromise = new Promise((resolve, reject) => {
+            const s = document.createElement('script');
+            s.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+            s.onload = resolve;
+            s.onerror = reject;
+            document.head.appendChild(s);
+        });
+        return chartJsPromise;
+    }
 
     function renderCharts() {
         const data = state.result;

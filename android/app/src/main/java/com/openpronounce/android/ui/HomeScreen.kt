@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -37,14 +39,18 @@ import com.openpronounce.android.data.WordCategory
 fun HomeScreen(
     categories: List<WordCategory>,
     onCategoryClick: (String) -> Unit,
+    onCustomText: () -> Unit,
+    onRandomWord: () -> Unit,
+    onPickSound: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
+    Box(modifier = modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
         item {
             Spacer(Modifier.height(4.dp))
             Text(
@@ -114,18 +120,19 @@ fun HomeScreen(
             )
         }
 
-        itemsIndexed(categories) { index, category ->
-            val containers = listOf(
-                MaterialTheme.colorScheme.secondaryContainer to MaterialTheme.colorScheme.onSecondaryContainer,
-                MaterialTheme.colorScheme.tertiaryContainer to MaterialTheme.colorScheme.onTertiaryContainer,
-                MaterialTheme.colorScheme.surfaceContainerHigh to MaterialTheme.colorScheme.onSurface
-            )
-            val (container, content) = containers[index % containers.size]
+        itemsIndexed(categories, key = { _, it -> it.id }) { index, category ->
+            val (badgeContainer, badgeContent) = when (index % 3) {
+                0 -> MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
+                1 -> MaterialTheme.colorScheme.secondaryContainer to MaterialTheme.colorScheme.onSecondaryContainer
+                else -> MaterialTheme.colorScheme.tertiaryContainer to MaterialTheme.colorScheme.onTertiaryContainer
+            }
 
             Card(
                 onClick = { onCategoryClick(category.id) },
                 shape = MaterialTheme.shapes.large,
-                colors = CardDefaults.cardColors(containerColor = container),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                ),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
@@ -139,13 +146,13 @@ fun HomeScreen(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
                             .size(44.dp)
-                            .background(content.copy(alpha = 0.12f), CircleShape)
+                            .background(badgeContainer, CircleShape)
                     ) {
                         Text(
                             category.name.first().toString(),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
-                            color = content
+                            color = badgeContent
                         )
                     }
                     Column(modifier = Modifier.weight(1f)) {
@@ -153,18 +160,18 @@ fun HomeScreen(
                             category.name,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
-                            color = content
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             if (LocalLang.current == "vi") "${category.words.size} từ" else "${category.words.size} words",
                             style = MaterialTheme.typography.bodySmall,
-                            color = content.copy(alpha = 0.7f)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     Icon(
                         Icons.AutoMirrored.Filled.ArrowForward,
                         contentDescription = null,
-                        tint = content.copy(alpha = 0.6f),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -173,11 +180,14 @@ fun HomeScreen(
 
         item { Spacer(Modifier.height(96.dp)) } // clears the FAB / bottom bar
     }
-}
 
-private fun androidx.compose.foundation.lazy.LazyListScope.itemsIndexed(
-    categories: List<WordCategory>,
-    itemContent: @Composable (Int, WordCategory) -> Unit
-) {
-    items(categories.size) { i -> itemContent(i, categories[i]) }
+    CreateFab(
+        onCustomText = onCustomText,
+        onRandomWord = onRandomWord,
+        onPickSound = onPickSound,
+        modifier = Modifier
+            .align(Alignment.BottomEnd)
+            .padding(bottom = 16.dp, end = 16.dp)
+    )
+    }
 }

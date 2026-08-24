@@ -58,6 +58,12 @@ fun CreateFab(
         label = "fabRotate"
     )
 
+    // Pre-cache labels so they don't allocate on every recomposition.
+    val labelCustom = t("Custom text", "Tự nhập")
+    val labelRandom = t("Random", "Ngẫu nhiên")
+    val labelSound = t("Practice a sound", "Luyện theo âm")
+    val mainLabel = if (expanded) t("Close", "Đóng") else t("Create practice", "Tạo buổi luyện")
+
     Box(modifier = modifier) {
         Column(horizontalAlignment = Alignment.End) {
             AnimatedVisibility(
@@ -71,24 +77,24 @@ fun CreateFab(
                 ) {
                     FabAction(
                         icon = Icons.Filled.Edit,
-                        label = t("Custom text", "Tự nhập"),
-                        shape = smallFabShape(),
+                        label = labelCustom,
+                        shape = smallFabShape,
                     ) {
                         expanded = false
                         onCustomText()
                     }
                     FabAction(
                         icon = Icons.Filled.Shuffle,
-                        label = t("Random", "Ngẫu nhiên"),
-                        shape = smallFabShape(),
+                        label = labelRandom,
+                        shape = smallFabShape,
                     ) {
                         expanded = false
                         onRandomWord()
                     }
                     FabAction(
                         icon = Icons.Filled.GraphicEq,
-                        label = t("Practice a sound", "Luyện theo âm"),
-                        shape = smallFabShape(),
+                        label = labelSound,
+                        shape = smallFabShape,
                     ) {
                         expanded = false
                         onPickSound()
@@ -100,14 +106,14 @@ fun CreateFab(
 
             FloatingActionButton(
                 onClick = { expanded = !expanded },
-                shape = mainFabShape(),
+                shape = mainFabShape,
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                 modifier = Modifier.size(68.dp)
             ) {
                 Icon(
                     Icons.Filled.Add,
-                    contentDescription = if (expanded) t("Close", "Đóng") else t("Create practice", "Tạo buổi luyện"),
+                    contentDescription = mainLabel,
                     modifier = Modifier
                         .size(30.dp)
                         .rotate(rotation)
@@ -150,9 +156,6 @@ private fun FabAction(
     }
 }
 
-/**
- * Rounded-square silhouettes, slightly tighter on the small buttons so the group
- * reads as one family.
- */
-private fun mainFabShape(): Shape = RoundedCornerShape(20.dp)
-private fun smallFabShape(): Shape = RoundedCornerShape(14.dp)
+/** Pre-stable shapes — avoid allocating new objects on every recomposition. */
+private val mainFabShape = RoundedCornerShape(20.dp)
+private val smallFabShape = RoundedCornerShape(14.dp)

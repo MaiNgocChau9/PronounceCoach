@@ -175,10 +175,64 @@ def synthesize_kokoro(text, lang, voice):
     return np.concatenate(parts).astype(np.float32), KOKORO_SAMPLE_RATE
 
 
+NVIDIA_API_URL = "https://integrate.api.nvidia.com/v1/audio/speech"
+NVIDIA_API_KEY_ENV = "OPENPRONOUNCE_NVIDIA_API_KEY"
+NVIDIA_DEFAULT_MODEL = "nvidia/magpie-tts-multilingual"
+
+
+def nvidia_default_voice(lang):
+    """Return the default NVIDIA Magpie voice for ``lang`` or raise if unsupported."""
+    voices = {
+        "en": "Evan",
+        "es": "Kai",
+        "fr": "Neel",
+        "de": "Aiden",
+        "zh": "Basil",
+        "vi": "Aaron",
+    }
+    try:
+        return voices[lang]
+    except KeyError:
+        raise ValueError(
+            f"NVIDIA Magpie TTS has no default voice for language {lang!r} "
+            f"(supported: {', '.join(sorted(voices))}). Use another TTS backend."
+        ) from None
+
+
+def synthesize_nvidia(text, lang, voice):
+    """Synthesize with NVIDIA NIM (network, OpenAI-compatible speech API). Returns ``(waveform, sample_rate)``."""
+    import io
+
+    import librosa
+    import requests
+
+    api_key = os.environ.get(NVIDIA_API_KEY_ENV)
+    if not api_key:
+        raise RuntimeError(
+            f"Set the {NVIDIA_API_KEY_ENV} environment variable to your NVIDIA API key "
+            "(nvapi-...) to use the nvidia TTS backend."
+        )
+    response = requests.post(
+        NVIDIA_API_URL,
+        headers={"Authorization": f"Bearer {api_key}", "Accept": "audio/wav"},
+        json={
+            "model": os.environ.get("OPENPRONOUNCE_TTS_MODEL", NVIDIA_DEFAULT_MODEL),
+            "input": text,
+            "voice": voice,
+        },
+        timeout=60,
+    )
+    if response.status_code != 200:
+        raise RuntimeError(f"NVIDIA TTS request failed ({response.status_code}): {response.text}")
+    waveform, sr = librosa.load(io.BytesIO(response.content), sr=None, mono=True)
+    return waveform, sr
+
+
 BACKENDS = {
     "gtts": (synthesize_gtts, gtts_default_voice),
     "piper": (synthesize_piper, piper_default_voice),
     "kokoro": (synthesize_kokoro, kokoro_default_voice),
+    "nvidia": (synthesize_nvidia, nvidia_default_voice),
 }
 
 

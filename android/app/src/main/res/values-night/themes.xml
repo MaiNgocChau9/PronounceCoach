@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark splash: same structure, dark canvas so startup never flashes light. -->
+    <style name="Theme.OpenPronounce" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#111315</item>
+        <item name="postSplashScreenTheme">@style/Theme.OpenPronounce.Main</item>
+    </style>
+
+    <!-- Dark counterpart of the main theme: keeps the window (and framework surfaces
+         like the IME area) dark while Compose loads, not the light Material theme. -->
+    <style name="Theme.OpenPronounce.Main" parent="android:Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowBackground">#111315</item>
+    </style>
+</resources>

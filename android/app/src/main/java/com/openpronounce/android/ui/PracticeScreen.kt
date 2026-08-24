@@ -49,6 +49,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -80,6 +81,7 @@ import com.openpronounce.android.scoring.WordError
 @Composable
 fun PracticeScreen(
     word: WordItem?,
+    ipaTokens: List<String>,
     isRecording: Boolean,
     isAnalyzing: Boolean,
     result: PronunciationResult?,
@@ -144,11 +146,15 @@ fun PracticeScreen(
             // ---- Target sentence -------------------------------------------------
             if (word != null) {
                 val w = word
-                val wordErrs = result?.wordErrors?.filter { it.word.isNotEmpty() } ?: emptyList()
+                val wordErrs = remember(result) {
+                    result?.wordErrors?.filter { it.word.isNotEmpty() } ?: emptyList()
+                }
                 // Single-word target: its own entry in the result.
-                val myResult = if (wordErrs.size <= 1) {
-                    result?.wordErrors?.firstOrNull()
-                } else null
+                val myResult = remember(wordErrs) {
+                    if (wordErrs.size <= 1) {
+                        wordErrs.firstOrNull()
+                    } else null
+                }
 
                 Column(
                     modifier = Modifier.fillMaxWidth(),
@@ -181,17 +187,18 @@ fun PracticeScreen(
                                 ?: MaterialTheme.colorScheme.onSurface,
                             textAlign = TextAlign.Center
                         )
-                        if (w.ipa.isNotEmpty()) {
-                            Spacer(Modifier.height(2.dp))
-                            Text(
-                                coloredIpa(
-                                    ipa = w.ipa,
-                                    phoneCorrect = myResult?.phoneCorrect ?: emptyList()
-                                ),
-                                style = MaterialTheme.typography.bodyLarge,
-                                textAlign = TextAlign.Center
-                            )
-                        }
+                if (w.ipa.isNotEmpty()) {
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        coloredIpa(
+                            ipa = w.ipa,
+                            tokens = ipaTokens,
+                            phoneCorrect = myResult?.phoneCorrect ?: emptyList()
+                        ),
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Center
+                    )
+                }
                         if (!isCustomMode && w.meaning.isNotEmpty()) {
                             Spacer(Modifier.height(2.dp))
                             Text(
@@ -319,30 +326,33 @@ private fun RecordButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Only run the animation while recording — an always-on infinite transition
-    // would recompose this whole row every frame even when idle.
-    val scale: Float
-    if (isRecording) {
+    val scale = if (isRecording) {
         val pulse = rememberInfiniteTransition(label = "pulse")
-        scale = pulse.animateFloat(
+        val pulseScale by pulse.animateFloat(
             initialValue = 1f,
             targetValue = 1.08f,
             animationSpec = infiniteRepeatable(tween(700, easing = FastOutSlowInEasing), RepeatMode.Reverse),
             label = "scale"
-        ).value
+        )
+        pulseScale
     } else {
-        scale = 1f
+        1f
     }
+
     // Follow the Material scheme like its neighbors: primary when idle, error when recording.
     val container = if (isRecording) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
     val iconTint = if (isRecording) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.onPrimary
+    val view = androidx.compose.ui.platform.LocalView.current
 
     FilledIconButton(
-        onClick = onClick,
+        onClick = {
+            view.performHapticFeedback(android.view.HapticFeedbackConstants.CONFIRM)
+            onClick()
+        },
         enabled = enabled,
         modifier = modifier
             .size(48.dp)
-            .scale(if (isRecording) scale else 1f),
+            .scale(scale),
         colors = IconButtonDefaults.filledIconButtonColors(containerColor = container)
     ) {
         Icon(
@@ -373,9 +383,11 @@ private fun ResultPanel(
         ScoreBanner(percent)
 
         // Sound-by-sound breakdown for every word that isn't perfect.
-        val imperfectWords = result.wordErrors
-            .filter { it.accuracyPercent < 100 && it.phoneCorrect.isNotEmpty() }
-            .sortedBy { it.accuracyPercent }
+        val imperfectWords = remember(result) {
+            result.wordErrors
+                .filter { it.accuracyPercent < 100 && it.phoneCorrect.isNotEmpty() }
+                .sortedBy { it.accuracyPercent }
+        }
         if (imperfectWords.isNotEmpty()) {
             Spacer(Modifier.height(14.dp))
             Column(
@@ -476,6 +488,13 @@ private fun WordDetailCard(
     word: WordError,
     onSpeakWord: (String) -> Unit
 ) {
+    // Pre-split IPA once per card recomposition instead of inside the loop.
+    val phones = remember(word.expectedIpa) {
+        word.expectedIpa.split(" ").filter { it.isNotEmpty() }
+    }
+    val correct = word.phoneCorrect
+    val heard = word.phoneHeard
+
     Surface(
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -507,13 +526,9 @@ private fun WordDetailCard(
                 }
             }
 
-            val phones = word.expectedIpa.split(" ").filter { it.isNotEmpty() }
-            val correct = word.phoneCorrect
-            val heard = word.phoneHeard
-
             if (phones.isEmpty()) {
                 Text(
-                    "An extra sound slipped in while reading.",
+                    t("An extra sound slipped in while reading.", "Có âm thừa khi đọc."),
                     style = MaterialTheme.typography.bodySmall,
                     fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -594,7 +609,8 @@ private fun NoSpeechCard() {
             Spacer(Modifier.height(8.dp))
             Text(t("We couldn't hear you", "Chúng tôi không nghe rõ"), style = MaterialTheme.typography.titleMedium)
             Text(
-                "Hãy nói to hơn và gần mic hơn, rồi thử lại.",
+                t("Speak louder and closer to the mic, then try again.",
+                  "Hãy nói to hơn và gần mic hơn, rồi thử lại."),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -618,14 +634,16 @@ private fun scoreColor(percent: Int): Color = when {
 /**
  * IPA string with each phone token colored by correctness (green = said right,
  * red = wrong/missing), like ELSA's per-sound feedback.
+ * [tokens] is the pre-split list from the ViewModel (avoids splitting on every recomposition).
  */
 @Composable
 private fun coloredIpa(
     ipa: String,
+    tokens: List<String>,
     phoneCorrect: List<Boolean>
 ) = buildAnnotatedString {
-    val tokens = ipa.trim().split(Regex("\\s+")).filter { it.isNotEmpty() }
-    if (phoneCorrect.isEmpty() || tokens.size != phoneCorrect.size) {
+    val t = if (tokens.isNotEmpty()) tokens else ipa.trim().split(Regex("\\s+")).filter { it.isNotEmpty() }
+    if (phoneCorrect.isEmpty() || t.size != phoneCorrect.size) {
         withStyle(
             SpanStyle(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -635,7 +653,7 @@ private fun coloredIpa(
         return@buildAnnotatedString
     }
     append("/")
-    tokens.forEachIndexed { i, token ->
+    t.forEachIndexed { i, token ->
         if (i > 0) append(" ")
         withStyle(
             SpanStyle(

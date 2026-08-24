@@ -55,27 +55,22 @@ fun SoundPickerScreen(
     val diphthongsLabel = t("Diphthongs", "Nguyên âm kép")
     val consonantsLabel = t("Consonants", "Phụ âm")
 
-    Scaffold(
-        modifier = modifier,
-        topBar = {
-            TopAppBar(
-                title = { Text(t("Pick a sound", "Chọn một âm")) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = t("Back", "Quay lại"))
-                    }
-                },
-                colors = TopAppBarDefaults.largeTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
+    Column(modifier = modifier.fillMaxSize()) {
+        TopAppBar(
+            title = { Text(t("Pick a sound", "Chọn một âm")) },
+            navigationIcon = {
+                IconButton(onClick = onBack) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = t("Back", "Quay lại"))
+                }
+            },
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = MaterialTheme.colorScheme.surface
             )
-        }
-    ) { padding ->
+        )
         LazyVerticalGrid(
             columns = GridCells.Fixed(4),
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
                 .padding(horizontal = 20.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -145,7 +140,7 @@ private fun androidx.compose.foundation.lazy.grid.LazyGridScope.section(
             modifier = Modifier.padding(top = 14.dp, bottom = 2.dp)
         )
     }
-    items(entries) { entry ->
+    items(entries, key = { it.symbol }) { entry ->
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
