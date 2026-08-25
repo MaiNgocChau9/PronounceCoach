@@ -24,3 +24,5 @@ android/wav2vec2_*.onnx
 # Node (Tailwind build tooling only)
 node_modules/
 package-lock.json
+
+*.apk.idsig
