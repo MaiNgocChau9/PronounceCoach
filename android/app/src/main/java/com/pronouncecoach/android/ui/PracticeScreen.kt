@@ -36,7 +36,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.Stop
-import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalIconButton
@@ -281,7 +281,7 @@ fun PracticeScreen(
                             onClick = onListen,
                             enabled = modelState is ModelState.Ready && !isAnalyzing
                         ) {
-                            Icon(Icons.Filled.VolumeUp, contentDescription = t("Listen", "Nghe"))
+                            Icon(Icons.AutoMirrored.Filled.VolumeUp, contentDescription = t("Listen", "Nghe"))
                         }
                         if (!isCustomMode) {
                             FilledTonalIconButton(
@@ -518,7 +518,7 @@ private fun WordDetailCard(
                 Spacer(Modifier.width(8.dp))
                 IconButton(onClick = { onSpeakWord(word.word) }, modifier = Modifier.size(32.dp)) {
                     Icon(
-                        Icons.Filled.VolumeUp,
+                        Icons.AutoMirrored.Filled.VolumeUp,
                         contentDescription = "Hear \u201c${word.word}\u201d",
                         tint = ScoreGood,
                         modifier = Modifier.size(20.dp)
